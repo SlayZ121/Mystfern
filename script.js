@@ -12,14 +12,32 @@ window.addEventListener("load", function () {
       this.game = game;
       this.collisionx = this.game.width * 0.5;
       this.collisiony = this.game.height * 0.5;
-      this.collisionRadius = 30;
+      this.collisionRadius = 50;
       this.speedx = 0;
       this.speedy = 0;
       this.dx = 0;
       this.dy = 0;
       this.speedMod = 5;
+      this.spriteWidth = 255;
+      this.spriteHeight = 255;
+      this.width = this.spriteWidth;
+      this.height = this.spriteHeight;
+      this.spriteX;
+      this.spriteY;
+      this.image = document.getElementById("bull");
     }
     draw(context) {
+      context.drawImage(
+        this.image,
+        0,
+        0,
+        this.spriteWidth,
+        this.spriteHeight,
+        this.spriteX,
+        this.spriteY,
+        this.width,
+        this.height
+      );
       context.beginPath();
       context.arc(
         this.collisionx,
@@ -52,6 +70,22 @@ window.addEventListener("load", function () {
 
       this.collisionx += this.speedx * this.speedMod;
       this.collisiony += this.speedy * this.speedMod;
+      this.spriteX = this.collisionx - this.width * 0.5;
+      this.spriteY = this.collisiony - this.height * 0.5 - 100;
+      //collision with obstacles
+      this.game.obstacles.forEach((obstacle) => {
+        //[distance < sumOfRadii, distance, sumOfRadii, dx, dy]
+        //destructuring them
+        let [collision, distance, sumOfRadii, dx, dy] =
+          this.game.checkCollision(this, obstacle);
+
+        if (collision) {
+          const unit_x = dx / distance;
+          const unit_y = dy / distance;
+          this.collisionx = obstacle.collisionx + (sumOfRadii + 1) * unit_x;
+          this.collisiony = obstacle.collisiony + (sumOfRadii + 1) * unit_y;
+        }
+      });
     }
   }
 
@@ -133,10 +167,18 @@ window.addEventListener("load", function () {
     }
 
     render(context) {
+      this.obstacles.forEach((obstacle) => obstacle.draw(context));
       this.player.draw(context);
       this.player.update();
-      this.obstacles.forEach((obstacle) => obstacle.draw(context));
     }
+    checkCollision(a, b) {
+      const dx = a.collisionx - b.collisionx;
+      const dy = a.collisiony - b.collisiony;
+      const distance = Math.hypot(dy, dx);
+      const sumOfRadii = a.collisionRadius + b.collisionRadius;
+      return [distance < sumOfRadii, distance, sumOfRadii, dx, dy];
+    }
+
     init() {
       let attempts = 0;
       while (this.obstacles.length < this.numOfObstacles && attempts < 500) {
