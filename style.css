@@ -19,6 +19,8 @@
 }
 #obstacles,
 #bull,
-#egg {
+#egg,
+#toad,
+#larva {
   display: none;
 }
